@@ -68,18 +68,14 @@ public class Brute {
         }
     }
 
-    private static void drawSegment(Point aPoint,
-                                    Point bPoint,
-                                    Point cPoint,
-                                    Point dPoint) {
-        Point[] collinear = { aPoint, bPoint, cPoint, dPoint };
-        Arrays.sort(collinear);
+    private static void drawSegment(Point... collinearPoints) {
+        Arrays.sort(collinearPoints);
 
-        StdOut.printf("%s -> %s -> %s -> %s\n", collinear[0],
-                                                collinear[1],
-                                                collinear[2],
-                                                collinear[3]);
-        collinear[0].drawTo(collinear[3]);
+        StdOut.printf("%s -> %s -> %s -> %s\n", collinearPoints[0],
+                                                collinearPoints[1],
+                                                collinearPoints[2],
+                                                collinearPoints[3]);
+        collinearPoints[0].drawTo(collinearPoints[3]);
     }
 
 }
