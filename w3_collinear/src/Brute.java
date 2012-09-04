@@ -75,6 +75,10 @@ public class Brute {
         Point[] collinear = { aPoint, bPoint, cPoint, dPoint };
         Arrays.sort(collinear);
 
+        StdOut.printf("%s -> %s -> %s -> %s\n", collinear[0],
+                                                collinear[1],
+                                                collinear[2],
+                                                collinear[3]);
         collinear[0].drawTo(collinear[3]);
     }
 
