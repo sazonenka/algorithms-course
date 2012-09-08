@@ -3,70 +3,77 @@
  *  Written:       9/7/2012
  *  Last updated:  9/7/2012
  *
+ *  Implementation of the A* algorithm.
+ *
  *----------------------------------------------------------------*/
 
 public class Solver {
 
-    private MinPQ<SearchNode> search1;
-    private MinPQ<SearchNode> search2;
+    private final SearchNode goal; // the target node
 
-    private SearchNode goal;
-    private int moves;
-
-    // find a solution to the initial board (using the A* algorithm)
+    /** Finds a solution to the initial board (using the A* algorithm). */
     public Solver(Board initial) {
-        this.search1 = new MinPQ<SearchNode>();
-        this.search2 = new MinPQ<SearchNode>();
+        MinPQ<SearchNode> queue1 = new MinPQ<SearchNode>();
+        MinPQ<SearchNode> queue2 = new MinPQ<SearchNode>();
 
-        this.goal = null;
-        this.moves = 0;
-
-        solve(initial);
-    }
-
-    private void solve(Board initial) {
-        search1.insert(new SearchNode(initial, null, moves));
-        search2.insert(new SearchNode(initial.twin(), null, moves));
+        queue1.insert(new SearchNode(initial, null, 0));
+        queue2.insert(new SearchNode(initial.twin(), null, 0));
 
         while (true) {
-            SearchNode node1 = search1.delMin();
-            Board board1 = node1.getBoard();
-            if (board1.isGoal()) {
-                goal = node1;
+            SearchNode node1 = queue1.delMin();
+            if (node1.getBoard().isGoal()) {
+                this.goal = node1;
                 break;
             }
 
-            SearchNode node2 = search2.delMin();
-            Board board2 = node2.getBoard();
-            if (board2.isGoal()) {
+            SearchNode node2 = queue2.delMin();
+            if (node2.getBoard().isGoal()) {
+                this.goal = null;
                 break;
             }
 
-            moves++;
+            for (Board neighbor : node1.getBoard().neighbors()) {
+                SearchNode previous = node1.getPrevious();
+                if (previous != null && previous.getBoard().equals(neighbor)) {
+                    continue;
+                }
 
-            for (Board neighbor : board1.neighbors()) {
-                search1.insert(new SearchNode(neighbor, node1, moves));
+                SearchNode newNode = new SearchNode(neighbor, node1,
+                        node1.getMovesMade() + 1);
+                queue1.insert(newNode);
             }
 
-            for (Board neighbor : board2.neighbors()) {
-                search2.insert(new SearchNode(neighbor, node2, moves));
+            for (Board neighbor : node2.getBoard().neighbors()) {
+                SearchNode previous = node2.getPrevious();
+                if (previous != null && previous.getBoard().equals(neighbor)) {
+                    continue;
+                }
+
+                SearchNode newNode = new SearchNode(neighbor, node2,
+                        node2.getMovesMade() + 1);
+                queue2.insert(newNode);
             }
         }
     }
 
-    // is the initial board solvable?
+    /** Is the initial board solvable? */
     public boolean isSolvable() {
         return goal != null;
     }
 
-    // min number of moves to solve initial board; -1 if no solution
+    /**
+     * Returns min number of moves to solve initial board;
+     * -1 if no solution.
+     */
     public int moves() {
         if (!isSolvable()) return -1;
-
-        return moves;
+        else               return goal.getMovesMade();
     }
 
-    // sequence of boards in a shortest solution; null if no solution
+    /**
+     * Returns the sequence of boards in a shortest solution;
+     * null if no solution.
+     */
     public Iterable<Board> solution() {
         if (!isSolvable()) return null;
 
@@ -77,7 +84,7 @@ public class Solver {
         return solution;
     }
 
-    // solve a slider puzzle (given below)
+    /** Solves a slider puzzle. */
     public static void main(String[] args) {
         // create initial board from file
         In in = new In(args[0]);
@@ -105,29 +112,34 @@ public class Solver {
         }
     }
 
-    private class SearchNode implements Comparable<SearchNode> {
+    /**
+     * A basic structure of A* search.
+     */
+    private static class SearchNode implements Comparable<SearchNode> {
+        private final Board board;          // the current board
+        private final SearchNode previous;  // the pointer to the previous node
+        private final int movesMade;        // the number of moves made so far
 
-        private final Board board;
-        private final SearchNode previous;
-        private final int movesMade;
-
+        /** Creates a search node. */
         public SearchNode(Board board, SearchNode previous, int movesMade) {
             this.board = board;
             this.previous = previous;
             this.movesMade = movesMade;
         }
 
+        /** Returns the current board. */
         public Board getBoard() { return board; }
+        /** Returns the previous node. */
         public SearchNode getPrevious() { return previous; }
+        /** Returns the number of moves made so far. */
         public int getMovesMade() { return movesMade; }
 
         @Override
         public int compareTo(SearchNode that) {
-            int m1 = this.board.manhattan();
-            int m2 = that.board.manhattan();
+            int m1 = this.board.manhattan() + this.movesMade;
+            int m2 = that.board.manhattan() + that.movesMade;
             return m1 - m2;
         }
-
     }
 
 }

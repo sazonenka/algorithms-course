@@ -3,30 +3,41 @@
  *  Written:       9/7/2012
  *  Last updated:  9/7/2012
  *
+ *  A model of N-by-N board.
+ *
  *----------------------------------------------------------------*/
 
 import java.util.Arrays;
 
 public class Board {
 
-    private final int[][] blocks;
-    private final int n;
-    private final int manhattan;
+    private final int[][] blocks; // the cells in the board
+    private final int n;          // the size of the board
+    private final int manhattan;  // the sum of the Manhattan distances
+                                  // from the blocks to their goal positions
 
-    // construct a board from an N-by-N array of blocks
-    // (where blocks[i][j] = block in row i, column j)
+    /**
+     * Constructs a board from an N-by-N array of blocks
+     * (where blocks[i][j] = block in row i, column j).
+     *
+     * @param blocks the cells in the board.
+     */
     public Board(int[][] blocks) {
         this.blocks = copyBlocks(blocks);
         this.n = blocks.length;
         this.manhattan = internalManhattan();
     }
 
-    // board dimension N
+    /**
+     * Retuns the board size.
+     */
     public int dimension() {
         return n;
     }
 
-    // number of blocks out of place
+    /**
+     * Returns the number of blocks out of place.
+     */
     public int hamming() {
         int hamming = 0;
         for (int i = 0; i < n; i++) {
@@ -42,8 +53,15 @@ public class Board {
         return hamming;
     }
 
+    /**
+     * Returns sum of Manhattan distances between blocks and goal.
+     */
+    public int manhattan() {
+        return manhattan;
+    }
+
     private int internalManhattan() {
-        int manhattan = 0;
+        int sumManhattan = 0;
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
                 int actualValue = blocks[i][j];
@@ -51,21 +69,18 @@ public class Board {
                     int expectedI = (actualValue - 1) / n;
                     int expectedJ = (actualValue - 1) % n;
 
-                    int distance = Math.abs(expectedI - i) +
-                            Math.abs(expectedJ - j);
-                    manhattan += distance;
+                    int distance = Math.abs(expectedI - i)
+                                 + Math.abs(expectedJ - j);
+                    sumManhattan += distance;
                 }
             }
         }
-        return manhattan;
+        return sumManhattan;
     }
 
-    // sum of Manhattan distances between blocks and goal
-    public int manhattan() {
-        return manhattan;
-    }
-
-    // is this board the goal board?
+    /**
+     * Is this board the goal board?
+     */
     public boolean isGoal() {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -80,7 +95,10 @@ public class Board {
         return true;
     }
 
-    // a board obtained by exchanging two adjacent blocks in the same row
+    /**
+     * Returns a board obtained by exchanging two adjacent blocks
+     * in the same row.
+     */
     public Board twin() {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n - 1; j++) {
@@ -92,7 +110,9 @@ public class Board {
         return null;
     }
 
-    // all neighboring boards
+    /**
+     * Returns all neighboring boards.
+     */
     public Iterable<Board> neighbors() {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
@@ -142,7 +162,7 @@ public class Board {
         a[i2][j2] = temp;
     }
 
-    // does this board equal y?
+    @Override
     public boolean equals(Object y) {
         if (y == this) return true;
         if (y == null) return false;
@@ -153,7 +173,7 @@ public class Board {
         return Arrays.deepEquals(this.blocks, that.blocks);
     }
 
-    // string representation of the board (in the output format specified below)
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(n + "\n");
