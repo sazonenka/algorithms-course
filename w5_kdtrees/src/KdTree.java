@@ -65,9 +65,9 @@ public class KdTree {
 
         int cmp = comparator.compare(point, nodePoint);
         if (cmp < 0) {
-            node.setLeft(insert(node.left, point, !vertical));
+            node.setLeft(insert(node.getLeft(), point, !vertical));
         } else {
-            node.setRight(insert(node.right, point, !vertical));
+            node.setRight(insert(node.getRight(), point, !vertical));
         }
         return node;
     }
@@ -142,8 +142,13 @@ public class KdTree {
      * Locates a nearest neighbor in the set to p; null if set is empty.
      */
     public Point2D nearest(Point2D p) {
-        final Point2D query = p;
-        MinPQ<Point2D> queue = new MinPQ<Point2D>(new Comparator<Point2D>() {
+        MinPQ<Point2D> queue = new MinPQ<Point2D>(distanceOrder(p));
+        nearest(root, new RectHV(0.0, 0.0, 1.0, 1.0), p, queue);
+        return queue.min();
+    }
+
+    private Comparator<Point2D> distanceOrder(final Point2D query) {
+        return new Comparator<Point2D>() {
             @Override
             public int compare(Point2D p, Point2D q) {
                 double dist1 = query.distanceSquaredTo(p);
@@ -152,10 +157,7 @@ public class KdTree {
                 else if (dist1 > dist2) return +1;
                 else                    return  0;
             }
-        });
-
-        nearest(root, new RectHV(0.0, 0.0, 1.0, 1.0), p, queue);
-        return queue.min();
+        };
     }
 
     private void nearest(Node node, RectHV rect,
@@ -177,19 +179,11 @@ public class KdTree {
                     rect.xmax(), rect.ymax());
 
             if (query.x() < point.x()) {
-                nearest(node.getLeft(), leftRect, query, queue);
-
-                if (rightRect.distanceSquaredTo(query) < queue.min()
-                        .distanceSquaredTo(query)) {
-                    nearest(node.getRight(), rightRect, query, queue);
-                }
+                nearestForSubTrees(node.getLeft(), node.getRight(),
+                        leftRect, rightRect, query, queue);
             } else {
-                nearest(node.getRight(), rightRect, query, queue);
-
-                if (leftRect.distanceSquaredTo(query) < queue.min()
-                        .distanceSquaredTo(query)) {
-                    nearest(node.getLeft(), leftRect, query, queue);
-                }
+                nearestForSubTrees(node.getRight(), node.getLeft(),
+                        rightRect, leftRect, query, queue);
             }
         } else {
             Point2D left = new Point2D(rect.xmin(), point.y());
@@ -201,20 +195,24 @@ public class KdTree {
                     rect.xmax(), rect.ymax());
 
             if (query.y() < point.y()) {
-                nearest(node.getLeft(), bottomRect, query, queue);
-
-                if (topRect.distanceSquaredTo(query) < queue.min()
-                        .distanceSquaredTo(query)) {
-                    nearest(node.getRight(), topRect, query, queue);
-                }
+                nearestForSubTrees(node.getLeft(), node.getRight(),
+                        bottomRect, topRect, query, queue);
             } else {
-                nearest(node.getRight(), topRect, query, queue);
-
-                if (bottomRect.distanceSquaredTo(query) < queue.min()
-                        .distanceSquaredTo(query)) {
-                    nearest(node.getLeft(), bottomRect, query, queue);
-                }
+                nearestForSubTrees(node.getRight(), node.getLeft(),
+                        topRect, bottomRect, query, queue);
             }
+        }
+    }
+
+    private void nearestForSubTrees(Node firstNode, Node secondNode,
+                                    RectHV firstRect, RectHV secondRect,
+                                    Point2D query, MinPQ<Point2D> queue) {
+        nearest(firstNode, firstRect, query, queue);
+
+        double distanceToChampion = queue.min().distanceSquaredTo(query);
+        double distanceToSecondRect = secondRect.distanceSquaredTo(query);
+        if (distanceToSecondRect < distanceToChampion) {
+            nearest(secondNode, secondRect, query, queue);
         }
     }
 
